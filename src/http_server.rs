@@ -1,3 +1,4 @@
+use crate::http::http_request::HTTPRequest;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 
@@ -23,6 +24,15 @@ impl HTTPServer {
                     match stream.read(&mut buffer) {
                         Ok(_) => {
                             println!("Request: {}", String::from_utf8_lossy(&buffer));
+
+                            match HTTPRequest::try_from(&buffer[..]) {
+                                Ok(request) => {
+                                    println!("Request works");
+                                }
+                                Err(e) => {
+                                    println!("Error parsing request: {}", e);
+                                }
+                            }
                         }
                         Err(e) => {
                             println!("Error reading request: {}", e);
