@@ -1,5 +1,5 @@
-use crate::http::http_method::HTTPMethod;
 use crate::http::http_method::MethodError;
+use crate::http::{HTTPMethod, QueryString};
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
@@ -9,7 +9,7 @@ use std::str::Utf8Error;
 pub struct HTTPRequest<'buf> {
     method: HTTPMethod,
     path: &'buf str,
-    query_params: Option<&'buf str>,
+    query_params: Option<QueryString<'buf>>,
 }
 
 impl<'buf> TryFrom<&'buf [u8]> for HTTPRequest<'buf> {
@@ -30,7 +30,7 @@ impl<'buf> TryFrom<&'buf [u8]> for HTTPRequest<'buf> {
         let mut query_params = None;
 
         if let Some(i) = path.find('?') {
-            query_params = Some(&path[i + 1..]);
+            query_params = Some(QueryString::from(&path[i + 1..]));
             path = &path[..i];
         }
 
