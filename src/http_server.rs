@@ -27,7 +27,7 @@ impl HTTPServer {
 
                             match HTTPRequest::try_from(&buffer[..]) {
                                 Ok(request) => {
-                                    println!("Request works");
+                                    dbg!(request);
                                 }
                                 Err(e) => {
                                     println!("Error parsing request: {}", e);

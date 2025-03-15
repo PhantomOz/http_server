@@ -6,6 +6,7 @@ use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use std::str;
 use std::str::Utf8Error;
 
+#[derive(Debug)]
 pub struct HTTPRequest<'buf> {
     method: HTTPMethod,
     path: &'buf str,
@@ -19,8 +20,8 @@ impl<'buf> TryFrom<&'buf [u8]> for HTTPRequest<'buf> {
         let request = str::from_utf8(buffer)?;
 
         let (method, req) = get_next_word(request, 0).ok_or(ParseError::InvalidMethod)?;
-        let (mut path, req) = get_next_word(request, req).ok_or(ParseError::InvalidRequest)?;
-        let (protocol, _) = get_next_word(request, req).ok_or(ParseError::InvalidRequest)?;
+        let (mut path, req) = get_next_word(request, req + 1).ok_or(ParseError::InvalidRequest)?;
+        let (protocol, _) = get_next_word(request, req + 1).ok_or(ParseError::InvalidRequest)?;
 
         if protocol != "HTTP/1.1" {
             return Err(ParseError::InvalidProtocol);
