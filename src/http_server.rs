@@ -1,9 +1,15 @@
-use crate::http::http_request::HTTPRequest;
-use crate::http::HTTPResponse;
-use crate::http::StatusCode;
+use crate::http::{HTTPRequest, HTTPResponse, ParseError, StatusCode};
 
-use std::io::{Read, Write};
+use std::io::Read;
 use std::net::TcpListener;
+
+pub trait Handler {
+    fn handle_request(&self, request: &HTTPRequest) -> HTTPResponse;
+    fn handle_bad_request(&self, e: &ParseError) -> HTTPResponse {
+        println!("Failed to parse request: {}", e);
+        HTTPResponse::new(StatusCode::BadRequest, None)
+    }
+}
 
 pub struct HTTPServer {
     address: String,
@@ -14,7 +20,7 @@ impl HTTPServer {
         HTTPServer { address }
     }
 
-    pub fn run(self) {
+    pub fn run(self, mut handler: impl Handler) {
         println!("Listening on {}", self.address);
 
         let listener = TcpListener::bind(self.address).unwrap();
@@ -28,15 +34,13 @@ impl HTTPServer {
                         Ok(_) => {
                             println!("Request: {}", String::from_utf8_lossy(&buffer));
 
-                            match HTTPRequest::try_from(&buffer[..]) {
-                                Ok(request) => {
-                                    dbg!(request);
-                                    let response = HTTPResponse::new(StatusCode::Ok, None);
-                                    write!(stream, "{}", response);
-                                }
-                                Err(e) => {
-                                    println!("Error parsing request: {}", e);
-                                }
+                            let response = match HTTPRequest::try_from(&buffer[..]) {
+                                Ok(request) => handler.handle_request(&request),
+                                Err(e) => handler.handle_bad_request(&e),
+                            };
+
+                            if let Err(e) = response.send(&mut stream) {
+                                println!("Failed to send response: {}", e);
                             }
                         }
                         Err(e) => {
