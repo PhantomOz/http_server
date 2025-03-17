@@ -13,6 +13,20 @@ pub struct HTTPRequest<'buf> {
     query_params: Option<QueryString<'buf>>,
 }
 
+impl<'buf> HTTPRequest<'buf> {
+    pub fn path(&self) -> &str {
+        self.path
+    }
+
+    pub fn query_params(&self) -> Option<&QueryString> {
+        self.query_params.as_ref()
+    }
+
+    pub fn method(&self) -> &HTTPMethod {
+        &self.method
+    }
+}
+
 impl<'buf> TryFrom<&'buf [u8]> for HTTPRequest<'buf> {
     type Error = ParseError;
 
