@@ -12,8 +12,14 @@ impl WebsiteHandler {
 
     fn read_file(&self, file_path: &str) -> Option<String> {
         let path = format!("{}/{}", self.public_path, file_path);
-        match std::fs::read_to_string(path) {
-            Ok(content) => Some(content),
+        match std::fs::canonicalize(path) {
+            Ok(path) => {
+                if path.starts_with(&self.public_path) {
+                    std::fs::read_to_string(path).ok()
+                } else {
+                    None
+                }
+            }
             Err(_) => None,
         }
     }
@@ -25,7 +31,10 @@ impl Handler for WebsiteHandler {
             HTTPMethod::GET => match request.path() {
                 "/" => HTTPResponse::new(StatusCode::Ok, self.read_file("index.html")),
                 "/hello" => HTTPResponse::new(StatusCode::Ok, self.read_file("hello.html")),
-                _ => HTTPResponse::new(StatusCode::NotFound, None),
+                path => match self.read_file(path) {
+                    Some(content) => HTTPResponse::new(StatusCode::Ok, Some(content)),
+                    None => HTTPResponse::new(StatusCode::NotFound, None),
+                },
             },
             _ => HTTPResponse::new(StatusCode::MethodNotAllowed, None),
         }
