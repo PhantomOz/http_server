@@ -1,23 +1,34 @@
+use crate::http::StatusCode;
+use std::fmt;
+use std::fmt::{Display, Formatter};
+
 pub struct HTTPResponse {
-    status_code: HTTPStatus,
-    body: String,
+    status_code: StatusCode,
+    body: Option<String>,
 }
 
-enum HTTPStatus {
-    Ok = 200,
-    BadRequest = 400,
-    NotFound = 404,
-    InternalServerError = 500,
-}
-
-impl HTTPStatus {
-    pub fn new(status_code: u16) -> Self {
-        match status_code {
-            200 => Self::Ok,
-            400 => Self::BadRequest,
-            404 => Self::NotFound,
-            500 => Self::InternalServerError,
-            _ => panic!("Invalid status code"),
+impl HTTPResponse {
+    pub fn new(status_code: StatusCode, body: Option<String>) -> Self {
+        HTTPResponse {
+            status_code,
+            body: body,
         }
+    }
+}
+
+impl Display for HTTPResponse {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let body = match &self.body {
+            Some(b) => b,
+            None => "",
+        };
+
+        write!(
+            f,
+            "HTTP/1.1 {} {}\r\n\r\n{}",
+            self.status_code,
+            self.status_code.reason_phrase(),
+            body
+        )
     }
 }

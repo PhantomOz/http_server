@@ -1,4 +1,7 @@
 use crate::http::http_request::HTTPRequest;
+use crate::http::HTTPResponse;
+use crate::http::StatusCode;
+
 use std::io::{Read, Write};
 use std::net::TcpListener;
 
@@ -28,6 +31,8 @@ impl HTTPServer {
                             match HTTPRequest::try_from(&buffer[..]) {
                                 Ok(request) => {
                                     dbg!(request);
+                                    let response = HTTPResponse::new(StatusCode::Ok, None);
+                                    write!(stream, "{}", response);
                                 }
                                 Err(e) => {
                                     println!("Error parsing request: {}", e);
